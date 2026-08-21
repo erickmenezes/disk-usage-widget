@@ -10,7 +10,7 @@ private let log = Logger(subsystem: "com.erickmenezes.DiskUsage", category: "low
 /// Scope note: this only runs while the host app is running. A true background
 /// watcher would need a login item or LaunchAgent — deliberately out of scope.
 @MainActor
-final class LowSpaceMonitor: ObservableObject {
+final class LowSpaceMonitor: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
     @Published private(set) var lastCheck: Date?
     @Published private(set) var currentFreePercent: Int?
     @Published private(set) var authorized = false
@@ -23,6 +23,11 @@ final class LowSpaceMonitor: ObservableObject {
     private let hysteresisPoints = 2
 
     func start() {
+        // Without a delegate, macOS silently drops the banner and sound for any
+        // notification posted while this app is frontmost -- which is always the
+        // case here, since the first check runs on launch. It would still land in
+        // Notification Center, which is exactly the "no float, no sound" symptom.
+        UNUserNotificationCenter.current().delegate = self
         Task { await requestAuthorization() }
         check()
         timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
@@ -55,11 +60,12 @@ final class LowSpaceMonitor: ObservableObject {
         let freePercent = Int(((1 - boot.usedFraction) * 100).rounded())
         currentFreePercent = freePercent
 
-        guard AppGroup.alertsEnabled else { return }
-
         let threshold = AppGroup.thresholdPercent
         let wasBelow = AppGroup.defaults.bool(forKey: AppGroup.Key.isBelowThreshold)
         let isBelow = freePercent <= threshold
+        log.notice("check: free=\(freePercent)% threshold=\(threshold)% enabled=\(AppGroup.alertsEnabled) wasBelow=\(wasBelow) isBelow=\(isBelow) shared=\(AppGroup.isShared)")
+
+        guard AppGroup.alertsEnabled else { return }
 
         if isBelow && !wasBelow {
             AppGroup.defaults.set(true, forKey: AppGroup.Key.isBelowThreshold)
@@ -97,5 +103,14 @@ final class LowSpaceMonitor: ObservableObject {
                 log.notice("notify posted for \(volume.volumeName, privacy: .public) at \(freePercent)% free")
             }
         }
+    }
+
+    // MARK: - UNUserNotificationCenterDelegate
+
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification
+    ) async -> UNNotificationPresentationOptions {
+        [.banner, .sound, .list]
     }
 }
