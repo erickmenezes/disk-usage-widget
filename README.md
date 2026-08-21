@@ -31,6 +31,11 @@ an on/off toggle, a free-space threshold, and a test button.
 - An Apple ID added to Xcode. The App Group entitlement needs real team signing;
   ad-hoc cannot carry it.
 
+Bundle identifiers throughout (`com.erickmenezes.DiskUsage`, and the App Group
+`group.com.erickmenezes.DiskUsage`) are the original author's. Change them in
+`project.yml`, both `.entitlements` files, and `Shared/AppGroup.swift` if you intend
+to distribute your own build. They work as-is for running locally.
+
 ---
 
 ## Building
@@ -45,7 +50,15 @@ gitignored** — anything you set through Xcode's GUI (signing team, capabilitie
 build settings) is lost the next time the project is regenerated. Change it in
 `project.yml` instead.
 
-Set `DEVELOPMENT_TEAM` in `project.yml` to your own team ID before building.
+Set `DEVELOPMENT_TEAM` in `project.yml` to your own team ID before building — the
+committed value is the original author's and will not work for you. Find yours in
+Xcode → Settings → Accounts, or with:
+
+```sh
+security find-certificate -c "Apple Development" -p | openssl x509 -noout -subject
+```
+
+The `OU=` field is your team ID. A free personal team is enough to run this locally.
 
 ### Where the widget actually runs
 
@@ -153,8 +166,14 @@ only way to tell "suppressed correctly" from "never ran".
 
 ## Verifying the numbers
 
-Compare against `df -H /System/Volumes/Data` or `diskutil info /dev/disk3s1s1` —
+Compare against `df -H /System/Volumes/Data` or `diskutil info /` —
 **not** `df -H /`, which reports the sealed read-only system snapshot and is not your
 disk usage. `diskutil` container free space matches the widget exactly; `df` on the
 Data volume differs by a few points in *used* because it excludes other volumes and
 snapshots in the APFS container.
+
+---
+
+## Licence
+
+MIT. See `LICENSE`.
