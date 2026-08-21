@@ -33,7 +33,7 @@ struct DiskWidgetView: View {
 
     private var ring: some View {
         ZStack {
-            Circle().stroke(.quaternary, lineWidth: 10)
+            Circle().stroke(.tertiary, lineWidth: 10)
             Circle()
                 .trim(from: 0, to: entry.disk.usedFraction)
                 .stroke(tint, style: .init(lineWidth: 10, lineCap: .round))
@@ -108,7 +108,7 @@ private struct VolumeGauge: View {
                 .padding(.bottom, 12)  // gap above the ring
 
             ZStack {
-                Circle().stroke(.quaternary, lineWidth: 7)
+                Circle().stroke(.tertiary, lineWidth: 7)
                 Circle()
                     .trim(from: 0, to: disk.usedFraction)
                     .stroke(DiskWidgetView.tint(for: disk.usedFraction),
@@ -147,7 +147,7 @@ private struct VolumeRow: View {
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
-                Circle().stroke(.quaternary, lineWidth: 6)
+                Circle().stroke(.tertiary, lineWidth: 6)
                 Circle()
                     .trim(from: 0, to: disk.usedFraction)
                     .stroke(DiskWidgetView.tint(for: disk.usedFraction),
