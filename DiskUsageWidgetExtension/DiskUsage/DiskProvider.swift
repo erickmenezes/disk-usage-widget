@@ -35,6 +35,7 @@ struct DiskProvider: AppIntentTimelineProvider {
     /// Non-empty so systemLarge never renders a blank card.
     private func volumes() -> [DiskInfo] {
         let all = DiskReader.allVolumes()
+        duLog.notice("volumes: \(all.count) mounted -> \(all.map(\.volumeName).joined(separator: ", "), privacy: .public)")
         return all.isEmpty ? [fallback] : all
     }
 

@@ -16,6 +16,11 @@ struct DiskWidgetView: View {
         }
     }
 
+    /// Internal boot volume vs. anything mounted under /Volumes.
+    static func symbol(for disk: DiskInfo) -> String {
+        disk.path == "/" ? "internaldrive" : "externaldrive"
+    }
+
     var body: some View {
         switch family {
         case .systemSmall: small
@@ -23,6 +28,8 @@ struct DiskWidgetView: View {
         default:           medium
         }
     }
+
+    // MARK: - Small: single ring for the volume chosen in the picker
 
     private var ring: some View {
         ZStack {
@@ -46,28 +53,26 @@ struct DiskWidgetView: View {
         .padding()
     }
 
+    // MARK: - Medium: a row of rings, one per volume (Batteries-widget style)
+
     private var medium: some View {
-        HStack(spacing: 16) {
-            ring.frame(width: 84, height: 84)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(entry.disk.volumeName).font(.headline).lineLimit(1)
-                Label(DiskInfo.fmt(entry.disk.usedBytes) + " used", systemImage: "internaldrive")
-                    .font(.caption)
-                Text(DiskInfo.fmt(entry.disk.availableBytes) + " free")
-                    .font(.caption).foregroundStyle(.secondary)
-                Text("of " + DiskInfo.fmt(entry.disk.totalBytes))
-                    .font(.caption2).foregroundStyle(.tertiary)
+        // 4 fits comfortably at medium width without the labels colliding.
+        let disks = Array(entry.allDisks.prefix(4))
+        return HStack(alignment: .top, spacing: 0) {
+            ForEach(disks, id: \.id) { disk in
+                VolumeGauge(disk: disk)
+                    .frame(maxWidth: .infinity)
             }
-            Spacer()
         }
-        .padding()
+        .padding(.vertical, 8)
+        .padding(.horizontal, 4)
     }
-    /// systemLarge: every mounted volume as its own ring row. Ignores the
-    /// config picker by design - the point of the large family is the overview.
+
+    // MARK: - Large: every volume with full numbers
+
     private var large: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Volumes")
-                .font(.headline)
+            Text("Volumes").font(.headline)
             // Cap the list so a machine with many mounts cannot overflow the
             // widget; WidgetKit clips silently rather than scrolling.
             ForEach(entry.allDisks.prefix(4), id: \.id) { disk in
@@ -80,6 +85,39 @@ struct DiskWidgetView: View {
             Spacer(minLength: 0)
         }
         .padding()
+    }
+}
+
+/// A ring with the drive icon inside and the percentage beneath, mirroring the
+/// system Batteries widget. Used by systemMedium.
+private struct VolumeGauge: View {
+    let disk: DiskInfo
+
+    private var pct: Int { Int((disk.usedFraction * 100).rounded()) }
+
+    var body: some View {
+        VStack(spacing: 4) {
+            ZStack {
+                Circle().stroke(.quaternary, lineWidth: 7)
+                Circle()
+                    .trim(from: 0, to: disk.usedFraction)
+                    .stroke(DiskWidgetView.tint(for: disk.usedFraction),
+                            style: .init(lineWidth: 7, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                Image(systemName: DiskWidgetView.symbol(for: disk))
+                    .font(.system(size: 18))
+                    .foregroundStyle(.primary)
+            }
+            .frame(width: 56, height: 56)
+
+            Text("\(pct)%")
+                .font(.callout.weight(.semibold)).monospacedDigit()
+            Text(disk.volumeName)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
     }
 }
 

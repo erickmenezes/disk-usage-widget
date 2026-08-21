@@ -9,7 +9,13 @@ struct DiskUsageApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(monitor)
-                .onAppear { monitor.start() }
+                .onAppear {
+                    monitor.start()
+                    // Placed widgets keep a cached render until their timeline
+                    // reloads, so a rebuilt extension keeps showing the old
+                    // layout. Reloading on launch makes iteration visible.
+                    WidgetCenter.shared.reloadAllTimelines()
+                }
         }
         .defaultSize(width: 460, height: 520)
     }
