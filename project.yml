@@ -33,6 +33,7 @@ targets:
       # Metadata.appintents; without it the system cannot resolve the saved
       # VolumeEntity and silently falls back to defaultResult().
       - path: DiskUsageWidgetExtension/DiskUsage/SelectVolumeIntent.swift
+      - path: Shared
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.erickmenezes.DiskUsage
@@ -47,13 +48,10 @@ targets:
     dependencies:
       - sdk: AppIntents.framework
       - sdk: WidgetKit.framework
+      - sdk: UserNotifications.framework
       - target: DiskUsageWidgetExtension
         embed: true
         codeSign: true
-    postBuildScripts:
-      - script: "\"$SRCROOT/Scripts/install-widget.sh\""
-        name: Install to /Applications for widget gallery
-        basedOnDependencyAnalysis: false
 
   DiskUsageWidgetExtension:
     type: app-extension
@@ -62,6 +60,7 @@ targets:
       - path: DiskUsageWidgetExtension
         excludes:
           - Info.plist
+      - path: Shared
     info:
       path: DiskUsageWidgetExtension/Info.plist
       properties:
@@ -90,6 +89,13 @@ schemes:
     build:
       targets:
         DiskUsage: all
+      # Must be a scheme post-action, NOT a target build phase: target phases
+      # run before Xcode code-signs, so installing from one copies an unsigned
+      # app and launchd rejects it with RBS error 163.
+      postActions:
+        - name: Install to /Applications for widget gallery
+          script: "\"$SRCROOT/Scripts/install-widget.sh\""
+          settingsTarget: DiskUsage
     run:
       config: Debug
     archive:
