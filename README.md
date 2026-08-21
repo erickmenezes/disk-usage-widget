@@ -23,6 +23,41 @@ an on/off toggle, a free-space threshold, and a test button.
 
 ---
 
+## Installing
+
+Download the `.dmg` from [Releases](../../releases), open it, and drag **Disk
+Usage** to Applications.
+
+**The first launch needs one extra step.** The build is ad-hoc signed rather
+than notarized — there is no paid Apple Developer membership behind it — so
+macOS quarantines it and refuses to open it:
+
+1. Open it once. macOS says it "cannot be opened because Apple cannot check it
+   for malicious software".
+2. Go to **System Settings → Privacy & Security**, scroll to Security, and
+   press **Open Anyway**.
+3. Confirm.
+
+Or from a terminal:
+
+```bash
+xattr -d com.apple.quarantine "/Applications/Disk Usage.app"
+```
+
+The warning is accurate: nobody has vouched for that binary. If you would
+rather not take it on faith, build it yourself — it takes a couple of minutes
+and signs it locally with your own Apple ID.
+
+Then add the widget: right-click the desktop (or open Notification Center) →
+**Edit Widgets** → search **Disk Usage**.
+
+Released builds are signed without the App Group entitlement, which is
+restricted and cannot travel in an ad-hoc signature. Nothing is lost: the group
+is only ever read by the app itself, never across to the widget, so
+`UserDefaults` falls back to `.standard` — a path the code already handles. A
+locally built copy keeps using the group, so low-space settings do not carry
+across from one to the other.
+
 ## Requirements
 
 - macOS 14 or later

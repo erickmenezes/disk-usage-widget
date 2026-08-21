@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Release entitlements for the ad-hoc signed DMG. Same as the debug
+	     pair minus com.apple.security.application-groups, which is a
+	     restricted entitlement: requesting it makes the build demand a
+	     provisioning profile that an ad-hoc signature cannot have.
+
+	     Nothing is lost. The group is only ever read by the app itself
+	     (DiskUsageApp, LowSpaceMonitor) and never across the process
+	     boundary — the widget reads volumes directly — so UserDefaults
+	     simply falls back to .standard, which the code already handles. -->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<key>com.apple.security.files.user-selected.read-only</key>
+	<true/>
+</dict>
+</plist>
