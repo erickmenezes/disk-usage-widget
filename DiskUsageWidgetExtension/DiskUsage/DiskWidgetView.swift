@@ -105,7 +105,7 @@ private struct VolumeGauge: View {
                 .minimumScaleFactor(0.8)
                 .frame(maxWidth: .infinity)
                 .multilineTextAlignment(.center)
-                .padding(.bottom, 6)   // gap above the ring
+                .padding(.bottom, 12)  // gap above the ring
 
             ZStack {
                 Circle().stroke(.quaternary, lineWidth: 7)
