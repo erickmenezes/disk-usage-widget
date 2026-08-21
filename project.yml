@@ -13,16 +13,12 @@ settings:
     CURRENT_PROJECT_VERSION: "1"
     ENABLE_HARDENED_RUNTIME: YES
     SWIFT_EMIT_LOC_STRINGS: YES
-  configs:
-    # Debug: ad-hoc "Sign to Run Locally" - no Apple ID / team required.
-    # To use a real team instead, set DEVELOPMENT_TEAM here and flip
-    # CODE_SIGN_STYLE back to Automatic.
-    Debug:
-      CODE_SIGN_STYLE: Manual
-      CODE_SIGN_IDENTITY: "-"
-      PROVISIONING_PROFILE_SPECIFIER: ""
-    Release:
-      CODE_SIGN_STYLE: Automatic
+    # Real signing via the personal team. Required for App Groups, which
+    # ad-hoc signing cannot carry. Needs the Apple WWDR G3 intermediate in the
+    # login keychain - without it the chain to Apple Root CA cannot be built
+    # and codesign fails with "unable to build chain to self-signed root".
+    DEVELOPMENT_TEAM: VG87LBRMTR
+    CODE_SIGN_STYLE: Automatic
 
 targets:
   DiskUsage:

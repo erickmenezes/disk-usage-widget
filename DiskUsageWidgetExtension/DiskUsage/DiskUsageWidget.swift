@@ -13,6 +13,6 @@ struct DiskUsageWidget: Widget {
         }
         .configurationDisplayName("Disk Usage")
         .description("Used and free space for a volume.")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }

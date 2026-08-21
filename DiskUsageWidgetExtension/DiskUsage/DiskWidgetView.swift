@@ -6,8 +6,10 @@ struct DiskWidgetView: View {
     @Environment(\.widgetFamily) private var family
 
     private var pct: Int { Int((entry.disk.usedFraction * 100).rounded()) }
-    private var tint: Color {
-        switch entry.disk.usedFraction {
+    private var tint: Color { Self.tint(for: entry.disk.usedFraction) }
+
+    static func tint(for fraction: Double) -> Color {
+        switch fraction {
         case ..<0.75: return .green
         case ..<0.90: return .yellow
         default:      return .red
@@ -17,6 +19,7 @@ struct DiskWidgetView: View {
     var body: some View {
         switch family {
         case .systemSmall: small
+        case .systemLarge: large
         default:           medium
         }
     }
@@ -58,5 +61,55 @@ struct DiskWidgetView: View {
             Spacer()
         }
         .padding()
+    }
+    /// systemLarge: every mounted volume as its own ring row. Ignores the
+    /// config picker by design - the point of the large family is the overview.
+    private var large: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Volumes")
+                .font(.headline)
+            // Cap the list so a machine with many mounts cannot overflow the
+            // widget; WidgetKit clips silently rather than scrolling.
+            ForEach(entry.allDisks.prefix(4), id: \.id) { disk in
+                VolumeRow(disk: disk)
+            }
+            if entry.allDisks.count > 4 {
+                Text("+\(entry.allDisks.count - 4) more")
+                    .font(.caption2).foregroundStyle(.tertiary)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding()
+    }
+}
+
+/// One volume as a small ring plus its numbers. Used by systemLarge.
+private struct VolumeRow: View {
+    let disk: DiskInfo
+
+    private var pct: Int { Int((disk.usedFraction * 100).rounded()) }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle().stroke(.quaternary, lineWidth: 6)
+                Circle()
+                    .trim(from: 0, to: disk.usedFraction)
+                    .stroke(DiskWidgetView.tint(for: disk.usedFraction),
+                            style: .init(lineWidth: 6, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                Text("\(pct)")
+                    .font(.caption2.bold()).monospacedDigit()
+            }
+            .frame(width: 40, height: 40)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(disk.volumeName)
+                    .font(.subheadline.weight(.medium)).lineLimit(1)
+                Text("\(DiskInfo.fmt(disk.availableBytes)) free of \(DiskInfo.fmt(disk.totalBytes))")
+                    .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+            }
+            Spacer(minLength: 0)
+        }
     }
 }
