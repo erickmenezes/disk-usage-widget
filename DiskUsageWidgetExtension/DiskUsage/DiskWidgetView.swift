@@ -64,7 +64,8 @@ struct DiskWidgetView: View {
                     .frame(maxWidth: .infinity)
             }
         }
-        .padding(.vertical, 8)
+        .padding(.top, 18)
+        .padding(.bottom, 10)
         .padding(.horizontal, 4)
     }
 
@@ -96,7 +97,16 @@ private struct VolumeGauge: View {
     private var pct: Int { Int((disk.usedFraction * 100).rounded()) }
 
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 0) {
+            Text(disk.volumeName)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .frame(maxWidth: .infinity)
+                .multilineTextAlignment(.center)
+                .padding(.bottom, 6)   // gap above the ring
+
             ZStack {
                 Circle().stroke(.quaternary, lineWidth: 7)
                 Circle()
@@ -104,19 +114,26 @@ private struct VolumeGauge: View {
                     .stroke(DiskWidgetView.tint(for: disk.usedFraction),
                             style: .init(lineWidth: 7, lineCap: .round))
                     .rotationEffect(.degrees(-90))
+                // internaldrive and externaldrive have different intrinsic
+                // widths, so pin the glyph to a fixed centred box; otherwise
+                // each ring's icon sits on a slightly different axis.
                 Image(systemName: DiskWidgetView.symbol(for: disk))
                     .font(.system(size: 18))
                     .foregroundStyle(.primary)
+                    .frame(width: 30, height: 30)
             }
             .frame(width: 56, height: 56)
 
             Text("\(pct)%")
-                .font(.callout.weight(.semibold)).monospacedDigit()
-            Text(disk.volumeName)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+                // Explicit point size so this is one number to tune. Regular
+                // weight matches Batteries, but at .title2 that read smaller
+                // than the semibold it replaced, so the size goes up to compensate.
+                .font(.system(size: 26, weight: .medium)).monospacedDigit()
+                .minimumScaleFactor(0.7)
                 .lineLimit(1)
-                .minimumScaleFactor(0.8)
+                .frame(maxWidth: .infinity)
+                .multilineTextAlignment(.center)
+                .padding(.top, 16)     // gap below the ring
         }
     }
 }
