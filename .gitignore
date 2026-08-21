@@ -1,0 +1,7 @@
+.DS_Store
+DerivedData/
+build/
+*.xcuserstate
+xcuserdata/
+DiskUsageWidget.xcodeproj/
+DiskUsageWidget-plan.md

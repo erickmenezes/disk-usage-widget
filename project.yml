@@ -1,0 +1,100 @@
+name: DiskUsageWidget
+
+options:
+  bundleIdPrefix: com.erickmenezes
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_HARDENED_RUNTIME: YES
+    SWIFT_EMIT_LOC_STRINGS: YES
+  configs:
+    # Debug: ad-hoc "Sign to Run Locally" - no Apple ID / team required.
+    # To use a real team instead, set DEVELOPMENT_TEAM here and flip
+    # CODE_SIGN_STYLE back to Automatic.
+    Debug:
+      CODE_SIGN_STYLE: Manual
+      CODE_SIGN_IDENTITY: "-"
+      PROVISIONING_PROFILE_SPECIFIER: ""
+    Release:
+      CODE_SIGN_STYLE: Automatic
+
+targets:
+  DiskUsage:
+    type: application
+    platform: macOS
+    sources:
+      - path: App
+      # shared model + reader, also compiled into the widget extension
+      - path: DiskUsageWidgetExtension/DiskUsage/DiskInfo.swift
+      - path: DiskUsageWidgetExtension/DiskUsage/DiskReader.swift
+      # AppIntents types must also be in the host app so it emits its own
+      # Metadata.appintents; without it the system cannot resolve the saved
+      # VolumeEntity and silently falls back to defaultResult().
+      - path: DiskUsageWidgetExtension/DiskUsage/SelectVolumeIntent.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.erickmenezes.DiskUsage
+        PRODUCT_NAME: Disk Usage
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+        CODE_SIGN_ENTITLEMENTS: App/App.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        GENERATE_INFOPLIST_FILE: YES
+        COMBINE_HIDPI_IMAGES: YES
+    dependencies:
+      - sdk: AppIntents.framework
+      - sdk: WidgetKit.framework
+      - target: DiskUsageWidgetExtension
+        embed: true
+        codeSign: true
+    postBuildScripts:
+      - script: "\"$SRCROOT/Scripts/install-widget.sh\""
+        name: Install to /Applications for widget gallery
+        basedOnDependencyAnalysis: false
+
+  DiskUsageWidgetExtension:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: DiskUsageWidgetExtension
+        excludes:
+          - Info.plist
+    info:
+      path: DiskUsageWidgetExtension/Info.plist
+      properties:
+        CFBundlePackageType: XPC!
+        CFBundleDisplayName: Disk Usage
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.erickmenezes.DiskUsage.Widget
+        PRODUCT_NAME: DiskUsageWidgetExtension
+        CODE_SIGN_ENTITLEMENTS: DiskUsageWidgetExtension/Widget.entitlements
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME: WidgetBackground
+        # MUST stay NO. With YES, Xcode synthesizes its own Info.plist and
+        # silently drops the NSExtension key below -> the widget disappears
+        # from the gallery with no build error and no runtime message.
+        GENERATE_INFOPLIST_FILE: NO
+        SKIP_INSTALL: YES
+    dependencies:
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+
+schemes:
+  DiskUsage:
+    build:
+      targets:
+        DiskUsage: all
+    run:
+      config: Debug
+    archive:
+      config: Release
